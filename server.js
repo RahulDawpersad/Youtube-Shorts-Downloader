@@ -17,10 +17,9 @@ const FFMPEG_PATH = process.env.FFMPEG_PATH || "ffmpeg";
 const DOWNLOAD_DIR = path.join(__dirname, "downloads");
 const PUBLIC_DIR = path.join(__dirname, "public");
 
-// bgutil yt-dlp PO Token Provider
-const BGUTIL_SERVER_HOME =
-    process.env.BGUTIL_SERVER_HOME ||
-    "/opt/render/project/src/bgutil-provider/server";
+const BGUTIL_SCRIPT_PATH =
+    process.env.BGUTIL_SCRIPT_PATH ||
+    "/opt/render/project/src/bgutil-provider/server/build/generate_once.js";
 
 if (!fs.existsSync(DOWNLOAD_DIR)) {
     fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
@@ -28,7 +27,6 @@ if (!fs.existsSync(DOWNLOAD_DIR)) {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(express.static(PUBLIC_DIR));
 
 function extractVideoId(input) {
@@ -86,15 +84,15 @@ function runYtDlp(args) {
         console.log("========================================");
         console.log("yt-dlp:", YT_DLP_PATH);
         console.log("FFmpeg:", FFMPEG_PATH);
-        console.log("PO Token Provider:", BGUTIL_SERVER_HOME);
+        console.log("PO Token Script:", BGUTIL_SCRIPT_PATH);
         console.log("Arguments:", args);
 
-        const process = spawn(YT_DLP_PATH, args);
+        const childProcess = spawn(YT_DLP_PATH, args);
 
         let stdout = "";
         let stderr = "";
 
-        process.stdout.on("data", (data) => {
+        childProcess.stdout.on("data", (data) => {
             const output = data.toString();
 
             stdout += output;
@@ -107,7 +105,7 @@ function runYtDlp(args) {
                 });
         });
 
-        process.stderr.on("data", (data) => {
+        childProcess.stderr.on("data", (data) => {
             const output = data.toString();
 
             stderr += output;
@@ -120,12 +118,12 @@ function runYtDlp(args) {
                 });
         });
 
-        process.on("error", (error) => {
+        childProcess.on("error", (error) => {
             console.error("Failed to start yt-dlp:", error);
             reject(error);
         });
 
-        process.on("close", (code) => {
+        childProcess.on("close", (code) => {
             console.log("yt-dlp exited with code", code);
 
             if (code === 0) {
@@ -193,7 +191,7 @@ app.post("/api/preview", async (req, res) => {
 
             // bgutil PO Token Provider
             "--extractor-args",
-            `youtubepot-bgutilscript:server_home=${BGUTIL_SERVER_HOME}`,
+            `youtubepot-bgutilscript:script_path=${BGUTIL_SCRIPT_PATH}`,
 
             youtubeUrl
         ]);
@@ -272,7 +270,7 @@ app.post("/api/download", async (req, res) => {
 
             // bgutil PO Token Provider
             "--extractor-args",
-            `youtubepot-bgutilscript:server_home=${BGUTIL_SERVER_HOME}`,
+            `youtubepot-bgutilscript:script_path=${BGUTIL_SCRIPT_PATH}`,
 
             // FFmpeg
             "--ffmpeg-location",
@@ -417,7 +415,7 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log("yt-dlp:", YT_DLP_PATH);
     console.log("FFmpeg:", FFMPEG_PATH);
     console.log("JavaScript runtime: node");
-    console.log("PO Token Provider:", BGUTIL_SERVER_HOME);
+    console.log("PO Token Script:", BGUTIL_SCRIPT_PATH);
     console.log("Downloads:", DOWNLOAD_DIR);
     console.log("========================================");
 });
