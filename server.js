@@ -17,6 +17,11 @@ const FFMPEG_PATH = process.env.FFMPEG_PATH || "ffmpeg";
 const DOWNLOAD_DIR = path.join(__dirname, "downloads");
 const PUBLIC_DIR = path.join(__dirname, "public");
 
+// bgutil yt-dlp PO Token Provider
+const BGUTIL_SERVER_HOME =
+    process.env.BGUTIL_SERVER_HOME ||
+    "/opt/render/project/src/bgutil-provider/server";
+
 if (!fs.existsSync(DOWNLOAD_DIR)) {
     fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
 }
@@ -29,7 +34,6 @@ app.use(express.static(PUBLIC_DIR));
 function extractVideoId(input) {
     try {
         const url = new URL(input);
-
         const hostname = url.hostname.toLowerCase();
 
         if (hostname === "youtu.be") {
@@ -82,6 +86,7 @@ function runYtDlp(args) {
         console.log("========================================");
         console.log("yt-dlp:", YT_DLP_PATH);
         console.log("FFmpeg:", FFMPEG_PATH);
+        console.log("PO Token Provider:", BGUTIL_SERVER_HOME);
         console.log("Arguments:", args);
 
         const process = spawn(YT_DLP_PATH, args);
@@ -181,8 +186,15 @@ app.post("/api/preview", async (req, res) => {
             "--dump-single-json",
             "--no-playlist",
             "--skip-download",
+
+            // JavaScript runtime
             "--js-runtimes",
             "node",
+
+            // bgutil PO Token Provider
+            "--extractor-args",
+            `youtubepot-bgutilscript:server_home=${BGUTIL_SERVER_HOME}`,
+
             youtubeUrl
         ]);
 
@@ -253,16 +265,29 @@ app.post("/api/download", async (req, res) => {
     try {
         await runYtDlp([
             "--no-playlist",
+
+            // JavaScript runtime
             "--js-runtimes",
             "node",
+
+            // bgutil PO Token Provider
+            "--extractor-args",
+            `youtubepot-bgutilscript:server_home=${BGUTIL_SERVER_HOME}`,
+
+            // FFmpeg
             "--ffmpeg-location",
             FFMPEG_PATH,
+
+            // Video format
             "-f",
             "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best",
+
             "--merge-output-format",
             "mp4",
+
             "-o",
             outputPath,
+
             youtubeUrl
         ]);
 
@@ -392,6 +417,7 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log("yt-dlp:", YT_DLP_PATH);
     console.log("FFmpeg:", FFMPEG_PATH);
     console.log("JavaScript runtime: node");
+    console.log("PO Token Provider:", BGUTIL_SERVER_HOME);
     console.log("Downloads:", DOWNLOAD_DIR);
     console.log("========================================");
 });
