@@ -181,10 +181,10 @@ app.post("/api/preview", async (req, res) => {
 
     try {
         const result = await runYtDlp([
-             "--dump-single-json",
-  "--no-playlist",
-  "--skip-download",
-  "--verbose",
+            "--dump-single-json",
+            "--no-playlist",
+            "--skip-download",
+            "--verbose",
 
             // JavaScript runtime
             "--js-runtimes",
@@ -192,7 +192,11 @@ app.post("/api/preview", async (req, res) => {
 
             // bgutil PO Token Provider
             "--extractor-args",
-`youtubepot-bgutilscript:script_path=${BGUTIL_SCRIPT_PATH};youtube:player-client=android`,
+            `youtubepot-bgutilscript:script_path=${BGUTIL_SCRIPT_PATH}`,
+
+            // Player client — web first (works with PO token), android as fallback
+            "--extractor-args",
+            "youtube:player-client=web,android",
 
             youtubeUrl
         ]);
@@ -272,6 +276,10 @@ app.post("/api/download", async (req, res) => {
             // bgutil PO Token Provider
             "--extractor-args",
             `youtubepot-bgutilscript:script_path=${BGUTIL_SCRIPT_PATH}`,
+
+            // Player client — web first (works with PO token), android as fallback
+            "--extractor-args",
+            "youtube:player-client=web,android",
 
             // FFmpeg
             "--ffmpeg-location",
