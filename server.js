@@ -181,9 +181,10 @@ app.post("/api/preview", async (req, res) => {
 
     try {
         const result = await runYtDlp([
-            "--dump-single-json",
-            "--no-playlist",
-            "--skip-download",
+             "--dump-single-json",
+  "--no-playlist",
+  "--skip-download",
+  "--verbose",
 
             // JavaScript runtime
             "--js-runtimes",
