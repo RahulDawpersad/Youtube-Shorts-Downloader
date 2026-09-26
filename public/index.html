@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ShortDrop — YouTube Shorts Downloader</title>
+
+    <link
+        rel="stylesheet"
+        href="styles.css"
+    >
+
+</head>
+
+<body>
+
+<div class="background"></div>
+
+<header>
+
+    <a class="logo" href="#">
+        <span class="logo-icon">S</span>
+        <span>
+            Short<span>Drop</span>
+        </span>
+    </a>
+
+    <span class="badge">
+        HD DOWNLOADER
+    </span>
+
+</header>
+
+
+<main>
+
+    <section class="hero">
+
+        <div class="eyebrow">
+            FAST • SIMPLE • HD
+        </div>
+
+        <h1>
+            Download your
+            <span>Shorts.</span>
+        </h1>
+
+        <p>
+            Paste a YouTube Shorts link,
+            preview the video and download
+            an available HD copy.
+        </p>
+
+
+        <div class="url-box">
+
+            <div class="input-wrapper">
+
+                <span class="link-icon">🔗</span>
+
+                <input
+                    id="urlInput"
+                    type="url"
+                    placeholder="Paste your YouTube Shorts link..."
+                >
+
+                <button id="pasteBtn">
+                    Paste
+                </button>
+
+            </div>
+
+            <button
+                id="previewBtn"
+                class="preview-button"
+            >
+                Preview
+            </button>
+
+        </div>
+
+        <div
+            id="status"
+            class="status"
+        ></div>
+
+    </section>
+
+
+    <section
+        id="result"
+        class="result hidden"
+    >
+
+        <div class="preview">
+
+            <div class="video-card">
+
+                <img
+                    id="thumbnail"
+                    src=""
+                    alt="Video preview"
+                >
+
+                <div class="play">
+                    ▶
+                </div>
+
+                <span class="hd">
+                    HD READY
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="details">
+
+            <small>
+                VIDEO PREVIEW
+            </small>
+
+            <h2 id="title">
+                Video title
+            </h2>
+
+            <p id="channel">
+                Channel
+            </p>
+
+
+            <div class="metadata">
+
+                <div>
+                    <small>FORMAT</small>
+                    <strong>MP4</strong>
+                </div>
+
+                <div>
+                    <small>QUALITY</small>
+                    <strong>Up to 1080p</strong>
+                </div>
+
+                <div>
+                    <small>TYPE</small>
+                    <strong>Short</strong>
+                </div>
+
+            </div>
+
+
+            <button
+                id="downloadBtn"
+                class="download-button"
+            >
+                <span>↓</span>
+                Download HD
+            </button>
+
+            <p class="note">
+                Only download content you own
+                or have permission to save.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <section class="steps">
+
+        <div>
+            <b>01</b>
+            Paste your Shorts link
+        </div>
+
+        <span>→</span>
+
+        <div>
+            <b>02</b>
+            Preview the video
+        </div>
+
+        <span>→</span>
+
+        <div>
+            <b>03</b>
+            Download HD
+        </div>
+
+    </section>
+
+</main>
+
+
+<footer>
+
+    <span>
+        ShortDrop
+    </span>
+
+    <span>
+        Use responsibly and respect copyright.
+    </span>
+
+</footer>
+
+
+<script src="app.js"></script>
+
+</body>
+
+</html>
