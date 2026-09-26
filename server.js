@@ -192,7 +192,7 @@ app.post("/api/preview", async (req, res) => {
 
             // bgutil PO Token Provider
             "--extractor-args",
-`youtubepot-bgutilscript:script_path=${BGUTIL_SCRIPT_PATH};youtube:player-client=mweb`,
+`youtubepot-bgutilscript:script_path=${BGUTIL_SCRIPT_PATH};youtube:player-client=android`,
 
             youtubeUrl
         ]);
