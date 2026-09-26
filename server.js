@@ -23,40 +23,51 @@ if (!fs.existsSync(DOWNLOAD_DIR)) {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(express.static(PUBLIC_DIR));
 
 function extractVideoId(input) {
     try {
         const url = new URL(input);
 
-        if (url.hostname === "youtu.be") {
-            return url.pathname.replace("/", "").split("?")[0];
+        const hostname = url.hostname.toLowerCase();
+
+        if (hostname === "youtu.be") {
+            const id = url.pathname
+                .replace(/^\/+/, "")
+                .split("/")[0];
+
+            return id || null;
         }
 
         if (
-            url.hostname === "youtube.com" ||
-            url.hostname === "www.youtube.com" ||
-            url.hostname === "m.youtube.com"
+            hostname === "youtube.com" ||
+            hostname === "www.youtube.com" ||
+            hostname === "m.youtube.com"
         ) {
-            if (url.searchParams.get("v")) {
-                return url.searchParams.get("v");
+            const videoId = url.searchParams.get("v");
+
+            if (videoId) {
+                return videoId;
             }
 
-            const parts = url.pathname.split("/").filter(Boolean);
+            const parts = url.pathname
+                .split("/")
+                .filter(Boolean);
 
             if (
                 parts[0] === "shorts" ||
                 parts[0] === "embed" ||
                 parts[0] === "live"
             ) {
-                return parts[1];
+                return parts[1] || null;
             }
         }
-    } catch (error) {
+
+        return null;
+    } catch {
         return null;
     }
-
-    return null;
 }
 
 function buildYouTubeUrl(videoId) {
@@ -119,7 +130,9 @@ function runYtDlp(args) {
                 });
             } else {
                 const error = new Error(
-                    stderr || stdout || `yt-dlp exited with code ${code}`
+                    stderr ||
+                    stdout ||
+                    `yt-dlp exited with code ${code}`
                 );
 
                 error.code = code;
@@ -130,8 +143,14 @@ function runYtDlp(args) {
     });
 }
 
-app.get("/api/preview", async (req, res) => {
-    const inputUrl = req.query.url;
+/*
+========================================
+PREVIEW
+========================================
+*/
+
+app.post("/api/preview", async (req, res) => {
+    const inputUrl = req.body.url;
 
     console.log("");
     console.log("========================================");
@@ -171,16 +190,13 @@ app.get("/api/preview", async (req, res) => {
 
         return res.json({
             success: true,
-            video: {
-                id: videoId,
-                title: info.title || "YouTube Video",
-                thumbnail:
-                    info.thumbnail ||
-                    `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-                duration: info.duration || 0,
-                uploader: info.uploader || "",
-                url: youtubeUrl
-            }
+            thumbnail:
+                info.thumbnail ||
+                `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+            title: info.title || "YouTube Video",
+            channel: info.uploader || "",
+            duration: info.duration || 0,
+            videoId
         });
     } catch (error) {
         console.error("");
@@ -191,13 +207,21 @@ app.get("/api/preview", async (req, res) => {
 
         return res.status(500).json({
             success: false,
-            error: error.message || "Unable to retrieve video information."
+            error:
+                error.message ||
+                "Unable to retrieve video information."
         });
     }
 });
 
-app.get("/api/download", async (req, res) => {
-    const inputUrl = req.query.url;
+/*
+========================================
+DOWNLOAD
+========================================
+*/
+
+app.post("/api/download", async (req, res) => {
+    const inputUrl = req.body.url;
 
     console.log("");
     console.log("========================================");
@@ -243,7 +267,9 @@ app.get("/api/download", async (req, res) => {
         ]);
 
         if (!fs.existsSync(outputPath)) {
-            throw new Error("Download completed but the output file was not found.");
+            throw new Error(
+                "Download completed but the output file was not found."
+            );
         }
 
         const stats = fs.statSync(outputPath);
@@ -261,7 +287,10 @@ app.get("/api/download", async (req, res) => {
 
         res.download(outputPath, filename, (error) => {
             if (error) {
-                console.error("File download error:", error);
+                console.error(
+                    "File download error:",
+                    error.message
+                );
             }
 
             setTimeout(() => {
@@ -272,7 +301,10 @@ app.get("/api/download", async (req, res) => {
                             unlinkError.message
                         );
                     } else {
-                        console.log("Temporary file deleted:", filename);
+                        console.log(
+                            "Temporary file deleted:",
+                            filename
+                        );
                     }
                 });
             }, 5000);
@@ -297,10 +329,18 @@ app.get("/api/download", async (req, res) => {
 
         return res.status(500).json({
             success: false,
-            error: error.message || "Download failed."
+            error:
+                error.message ||
+                "Download failed."
         });
     }
 });
+
+/*
+========================================
+HEALTH CHECK
+========================================
+*/
 
 app.get("/api/health", (req, res) => {
     res.json({
@@ -309,12 +349,24 @@ app.get("/api/health", (req, res) => {
     });
 });
 
+/*
+========================================
+API 404
+========================================
+*/
+
 app.use("/api", (req, res) => {
     res.status(404).json({
         success: false,
         error: "API endpoint not found."
     });
 });
+
+/*
+========================================
+ERROR HANDLER
+========================================
+*/
 
 app.use((error, req, res, next) => {
     console.error("Unhandled server error:", error);
@@ -325,6 +377,12 @@ app.use((error, req, res, next) => {
     });
 });
 
+/*
+========================================
+START SERVER
+========================================
+*/
+
 app.listen(PORT, "0.0.0.0", () => {
     console.log("");
     console.log("========================================");
@@ -333,7 +391,7 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
     console.log("yt-dlp:", YT_DLP_PATH);
     console.log("FFmpeg:", FFMPEG_PATH);
-    console.log("Downloads:", DOWNLOAD_DIR);
     console.log("JavaScript runtime: node");
+    console.log("Downloads:", DOWNLOAD_DIR);
     console.log("========================================");
 });
