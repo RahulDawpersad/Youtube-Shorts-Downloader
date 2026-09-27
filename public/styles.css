@@ -516,6 +516,18 @@ footer {
 
     .url-box {
         flex-direction: column;
+        gap: 12px;
+    }
+
+    .input-wrapper {
+        height: 70px !important;
+        min-height: 70px;
+        padding: 0 14px 0 16px;
+        border-radius: 13px;
+    }
+
+    input {
+        font-size: 16px;
     }
 
     .preview-button {
@@ -539,19 +551,6 @@ footer {
     footer {
         flex-direction: column;
         gap: 8px;
-    }
-     .input-wrapper {
-        height: 70px;
-        padding: 0 14px 0 16px;
-        border-radius: 13px;
-    }
-
-    input {
-        font-size: 16px;
-    }
-
-    .url-box {
-        gap: 12px;
     }
 
 }
