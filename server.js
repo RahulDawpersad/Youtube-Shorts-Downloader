@@ -17,9 +17,9 @@ const FFMPEG_PATH = process.env.FFMPEG_PATH || "ffmpeg";
 const DOWNLOAD_DIR = path.join(__dirname, "downloads");
 const PUBLIC_DIR = path.join(__dirname, "public");
 
-const BGUTIL_SCRIPT_PATH =
-    process.env.BGUTIL_SCRIPT_PATH ||
-    "/opt/render/project/src/bgutil-provider/server/build/generate_once.js";
+const COOKIES_PATH =
+    process.env.COOKIES_PATH ||
+    "/opt/render/project/src/cookies.txt";
 
 if (!fs.existsSync(DOWNLOAD_DIR)) {
     fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
@@ -76,6 +76,15 @@ function buildYouTubeUrl(videoId) {
     return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
+function getCookiesArgs() {
+    if (fs.existsSync(COOKIES_PATH)) {
+        console.log("Using cookies file:", COOKIES_PATH);
+        return ["--cookies", COOKIES_PATH];
+    }
+    console.warn("No cookies file found at:", COOKIES_PATH);
+    return [];
+}
+
 function runYtDlp(args) {
     return new Promise((resolve, reject) => {
         console.log("");
@@ -84,7 +93,7 @@ function runYtDlp(args) {
         console.log("========================================");
         console.log("yt-dlp:", YT_DLP_PATH);
         console.log("FFmpeg:", FFMPEG_PATH);
-        console.log("PO Token Script:", BGUTIL_SCRIPT_PATH);
+        console.log("Cookies:", COOKIES_PATH);
         console.log("Arguments:", args);
 
         const childProcess = spawn(YT_DLP_PATH, args);
@@ -127,10 +136,7 @@ function runYtDlp(args) {
             console.log("yt-dlp exited with code", code);
 
             if (code === 0) {
-                resolve({
-                    stdout,
-                    stderr
-                });
+                resolve({ stdout, stderr });
             } else {
                 const error = new Error(
                     stderr ||
@@ -186,15 +192,10 @@ app.post("/api/preview", async (req, res) => {
             "--skip-download",
             "--verbose",
 
-            // JavaScript runtime
-            "--js-runtimes",
-            "node",
+            // Cookies for authentication
+            ...getCookiesArgs(),
 
-            // bgutil PO Token Provider
-            "--extractor-args",
-            `youtubepot-bgutilscript:script_path=${BGUTIL_SCRIPT_PATH}`,
-
-            // Player client — web first (works with PO token), android as fallback
+            // Player client
             "--extractor-args",
             "youtube:player-client=web,android",
 
@@ -269,15 +270,10 @@ app.post("/api/download", async (req, res) => {
         await runYtDlp([
             "--no-playlist",
 
-            // JavaScript runtime
-            "--js-runtimes",
-            "node",
+            // Cookies for authentication
+            ...getCookiesArgs(),
 
-            // bgutil PO Token Provider
-            "--extractor-args",
-            `youtubepot-bgutilscript:script_path=${BGUTIL_SCRIPT_PATH}`,
-
-            // Player client — web first (works with PO token), android as fallback
+            // Player client
             "--extractor-args",
             "youtube:player-client=web,android",
 
@@ -377,7 +373,8 @@ HEALTH CHECK
 app.get("/api/health", (req, res) => {
     res.json({
         success: true,
-        status: "online"
+        status: "online",
+        cookiesFound: fs.existsSync(COOKIES_PATH)
     });
 });
 
@@ -423,8 +420,11 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
     console.log("yt-dlp:", YT_DLP_PATH);
     console.log("FFmpeg:", FFMPEG_PATH);
-    console.log("JavaScript runtime: node");
-    console.log("PO Token Script:", BGUTIL_SCRIPT_PATH);
+    console.log("Cookies:", COOKIES_PATH);
+    console.log(
+        "Cookies found:",
+        fs.existsSync(COOKIES_PATH) ? "YES" : "NO — downloads will likely fail"
+    );
     console.log("Downloads:", DOWNLOAD_DIR);
     console.log("========================================");
 });
