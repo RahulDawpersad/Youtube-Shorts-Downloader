@@ -154,7 +154,8 @@ function runYtDlp(args) {
 
 /*
 ========================================
-PREVIEW
+PREVIEW — uses YouTube oEmbed API
+No cookies or yt-dlp needed
 ========================================
 */
 
@@ -183,43 +184,29 @@ app.post("/api/preview", async (req, res) => {
         });
     }
 
-    const youtubeUrl = buildYouTubeUrl(videoId);
-
     try {
-        const result = await runYtDlp([
-            "--dump-single-json",
-            "--no-playlist",
-            "--skip-download",
-            "--verbose",
+        const youtubeUrl = buildYouTubeUrl(videoId);
 
-            // JavaScript runtime
-            "--js-runtimes",
-            "node",
+        // Use YouTube oEmbed API — no auth needed
+        const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(youtubeUrl)}&format=json`;
 
-            // Cookies for authentication
-            ...getCookiesArgs(),
+        const response = await fetch(oembedUrl);
 
-            // Disable bgutil HTTP provider interference
-            "--extractor-args",
-            "youtubepot-bgutilhttp:skip=true",
+        if (!response.ok) {
+            throw new Error(`YouTube API error: ${response.status}`);
+        }
 
-            // Player client
-            "--extractor-args",
-            "youtube:player-client=web,android",
+        const data = await response.json();
 
-            youtubeUrl
-        ]);
-
-        const info = JSON.parse(result.stdout);
+        // oEmbed gives thumbnail_url but it's low res — build a better one
+        const thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
         return res.json({
             success: true,
-            thumbnail:
-                info.thumbnail ||
-                `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-            title: info.title || "YouTube Video",
-            channel: info.uploader || "",
-            duration: info.duration || 0,
+            thumbnail,
+            title: data.title || "YouTube Video",
+            channel: data.author_name || "",
+            duration: 0,
             videoId
         });
     } catch (error) {
@@ -284,10 +271,6 @@ app.post("/api/download", async (req, res) => {
 
             // Cookies for authentication
             ...getCookiesArgs(),
-
-            // Disable bgutil HTTP provider interference
-            "--extractor-args",
-            "youtubepot-bgutilhttp:skip=true",
 
             // Player client
             "--extractor-args",
