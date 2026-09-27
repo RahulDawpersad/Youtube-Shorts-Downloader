@@ -192,8 +192,16 @@ app.post("/api/preview", async (req, res) => {
             "--skip-download",
             "--verbose",
 
+            // JavaScript runtime
+            "--js-runtimes",
+            "node",
+
             // Cookies for authentication
             ...getCookiesArgs(),
+
+            // Disable bgutil HTTP provider interference
+            "--extractor-args",
+            "youtubepot-bgutilhttp:skip=true",
 
             // Player client
             "--extractor-args",
@@ -270,8 +278,16 @@ app.post("/api/download", async (req, res) => {
         await runYtDlp([
             "--no-playlist",
 
+            // JavaScript runtime
+            "--js-runtimes",
+            "node",
+
             // Cookies for authentication
             ...getCookiesArgs(),
+
+            // Disable bgutil HTTP provider interference
+            "--extractor-args",
+            "youtubepot-bgutilhttp:skip=true",
 
             // Player client
             "--extractor-args",
